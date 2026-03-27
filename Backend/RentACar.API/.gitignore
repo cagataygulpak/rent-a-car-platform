@@ -1,0 +1,16 @@
+# .NET Core / C#
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Rider
+.vs/
+.vscode/
+*.user
+*.suo
+*.rsuser
+
+# Mac
+.DS_Store
+
+# İsteğe bağlı: Geliştirici ortamı şifrelerini yoksay
+appsettings.Development.json
