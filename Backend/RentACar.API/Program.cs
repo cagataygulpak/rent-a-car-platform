@@ -5,20 +5,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RentACar.API.data;
 
-
-
-
 var builder = WebApplication.CreateBuilder(args);
-
 
 var jwtKey = builder.Configuration["JwtSettings:Key"];
 var key = Encoding.ASCII.GetBytes(jwtKey!);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddAuthorization();
+
+// 1. ÖNCE VERİTABANI BAĞLANTISI
+builder.Services.AddDbContext<Datacontext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 2. SONRA IDENTITY EKLENİR (Müdür Ataması)
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+})
+    .AddEntityFrameworkStores<Datacontext>()
+    .AddDefaultTokenProviders();
+
+// 3. EN SON AUTHENTICATION VE JWT EKLENİR (Müdürün kararını ezip JWT'yi zorluyoruz)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -47,7 +54,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
+// 4. CORS AYARLARI
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -58,21 +65,11 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-// 1. Veritabanı Bağlantısı (SQL Server)
-builder.Services.AddDbContext<Datacontext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// 2. Identity (Kullanıcı Yönetimi) Ayarları
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
-{
-    options.User.RequireUniqueEmail = true;
-})
-    .AddEntityFrameworkStores<Datacontext>()
-    .AddDefaultTokenProviders();
-
-
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -80,7 +77,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// 2. Middleware'i Devreye Sok
 app.UseCors("AllowAll"); // Yukarıdaki isimle AYNI olmalı
 
 app.UseHttpsRedirection();
@@ -88,18 +84,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-
 // 👇 --- SEED İŞLEMİ BAŞLANGIÇ --- 👇
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        // Servislerden UserManager ve RoleManager'ı çağırıyoruz
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-        // Seed dosyasındaki metodu çalıştır
         await SeedDatabase.SeedUsers(userManager, roleManager);
     }
     catch (Exception ex)
@@ -111,4 +103,3 @@ using (var scope = app.Services.CreateScope())
 // 👆 --- SEED İŞLEMİ BİTİŞ --- 👆
 
 app.Run();
-

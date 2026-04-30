@@ -75,6 +75,8 @@ public class RoleController : ControllerBase
         var role = await _roleManager.FindByIdAsync(id);
         if (role == null) return NotFound("Rol bulunamadı");
 
+        if (role.Name == newName) return BadRequest("Yeni rol adı mevcut rol adıyla aynı olamaz");
+
         role.Name = newName;
         var result = await _roleManager.UpdateAsync(role);
 
@@ -88,6 +90,11 @@ public class RoleController : ControllerBase
     {
         var role = await _roleManager.FindByIdAsync(id);
         if (role == null) return NotFound("Rol bulunamadı");
+
+        if (role.Name == "Admin")
+        {
+            return BadRequest("Admin rolü silinemez!");
+        }
 
         var result = await _roleManager.DeleteAsync(role);
         if (result.Succeeded) return Ok(new { message = "Rol silindi" });

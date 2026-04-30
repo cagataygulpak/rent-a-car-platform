@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace RentACar.API.data;
 
@@ -7,38 +6,60 @@ public class SeedDatabase
 {
     public static async Task SeedUsers(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
     {
-        // 1. Önce Rolleri Kontrol Et, Yoksa Oluştur
-        if (!await roleManager.Roles.AnyAsync())
+        // 1. ADIM: ROLLERİ GARANTİ ALTINA AL
+        string[] roles = { "Admin", "Member" };
+        foreach (var roleName in roles)
         {
-            await roleManager.CreateAsync(new IdentityRole { Name = "Admin" });
-            await roleManager.CreateAsync(new IdentityRole { Name = "Member" });
+            // Eğer rol veritabanında yoksa, anında oluştur.
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
         }
 
-        // 2. Kullanıcı Var mı Diye Bak (Hiç yoksa ekle)
-        if (!await userManager.Users.AnyAsync())
+        // 2. ADIM: ADMİN HESABINI VE ROLÜNÜ GARANTİ ALTINA AL
+        var adminEmail = "admin@rentacar.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+        // Kullanıcı hiç yoksa oluştur
+        if (adminUser == null)
         {
-            // --- ADMİN KULLANCISI ---
-            var adminUser = new IdentityUser
+            adminUser = new IdentityUser
             {
                 UserName = "admin",
-                Email = "admin@rentacar.com",
+                Email = adminEmail,
                 EmailConfirmed = true
             };
-
-            // Şifreyi Identity otomatik hashleyecek
             await userManager.CreateAsync(adminUser, "Password123!");
-            await userManager.AddToRoleAsync(adminUser, "Admin"); // Admin rolü ver
+        }
 
-            // --- NORMAL KULLANICI ---
-            var normalUser = new IdentityUser
+        // Kullanıcı var ama "Admin" rolü kopmuşsa (veya yeni oluştuysa), o rolü ekle
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+
+
+        // 3. ADIM: NORMAL (MEMBER) HESABI VE ROLÜNÜ GARANTİ ALTINA AL
+        var memberEmail = "ahmet@rentacar.com";
+        var memberUser = await userManager.FindByEmailAsync(memberEmail);
+
+        // Kullanıcı hiç yoksa oluştur
+        if (memberUser == null)
+        {
+            memberUser = new IdentityUser
             {
                 UserName = "ahmet",
-                Email = "ahmet@rentacar.com",
+                Email = memberEmail,
                 EmailConfirmed = true
             };
+            await userManager.CreateAsync(memberUser, "Password123!");
+        }
 
-            await userManager.CreateAsync(normalUser, "Password123!");
-            await userManager.AddToRoleAsync(normalUser, "Member"); // Member rolü ver
+        // Kullanıcı var ama "Member" rolü kopmuşsa (veya yeni oluştuysa), o rolü ekle
+        if (!await userManager.IsInRoleAsync(memberUser, "Member"))
+        {
+            await userManager.AddToRoleAsync(memberUser, "Member");
         }
     }
 }
