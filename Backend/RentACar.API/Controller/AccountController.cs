@@ -55,6 +55,7 @@ public class AccountController : ControllerBase
 
         if (result.Succeeded)
         {
+            await _userManager.AddToRoleAsync(user, "Member");
             return Ok("Kullanıcı başarıyla oluşturuldu.");
         }
 
@@ -108,29 +109,45 @@ public class AccountController : ControllerBase
 
         if (checkPassword.Succeeded)
         {
+            // 👇 1. MÜHENDİSLİK DOKUNUŞU: Token üretilmeden ÖNCE rolleri çekiyoruz!
+            var roles = await _userManager.GetRolesAsync(user);
+            var userRole = roles.FirstOrDefault() ?? "User";
+
+            // 👇 2. Yaka kartına basılacak temel bilgileri hazırlıyoruz
+            var authClaims = new List<Claim>
+            {
+                new Claim("id", user.Id),
+                new Claim("username", user.UserName!)
+            };
+
+            // 👇 3. KRİTİK NOKTA: Kullanıcının sahip olduğu rolleri tek tek yaka kartına (Token'a) mühürlüyoruz!
+            foreach (var role in roles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtKey = _configuration["JwtSettings:Key"];
             var key = Encoding.ASCII.GetBytes(jwtKey!);
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id), new Claim("username", user.UserName!) }),
-                Expires = DateTime.UtcNow.AddDays(7), // 7 Gün geçerli
+                // 👇 4. Mühürlü listeyi (authClaims) bekçiye teslim ediyoruz
+                Subject = new ClaimsIdentity(authClaims),
+                Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
+
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            // 2. Token'ı HttpOnly Cookie Olarak Ver (Frontend okuyamaz, Hacker çalamaz)
             Response.Cookies.Append("jwt", tokenString, new CookieOptions
             {
-                HttpOnly = true, // JavaScript erişemez!
-                Secure = false,  // Localhost (http) için false. Canlıda (https) true yapmalısın.
+                HttpOnly = true,
+                Secure = false,
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
-
-            var roles = await _userManager.GetRolesAsync(user);  // rol alma
-            var userRole = roles.FirstOrDefault() ?? "User";
 
             return Ok(new
             {

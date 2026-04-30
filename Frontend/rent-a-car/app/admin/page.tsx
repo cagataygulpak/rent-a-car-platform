@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { FaHome, FaCar, FaUsers, FaUserShield, FaSignOutAlt } from "react-icons/fa";
-// 👇 PARÇALADIĞIMIZ BİLEŞENLERİ ÇAĞIRIYORUZ
 import SidebarItem from "./components/SidebarItem";
 import DashboardView from "./components/DashboardView";
 import CarsView from "./components/CarsView";
