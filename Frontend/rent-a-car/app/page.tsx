@@ -1,67 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useCars } from "@/app/hooks/useCars";
 import {
-  FaMapMarkerAlt, FaSearch,
-  FaShieldAlt, FaWallet, FaStar, FaCogs, FaGasPump, FaUserFriends, FaApple, FaGooglePlay
+  FaMapMarkerAlt, FaSearch, FaShieldAlt, FaWallet, FaStar,
+  FaCogs, FaGasPump, FaUserFriends, FaApple, FaGooglePlay,
+  FaSpinner
 } from "react-icons/fa";
 
-
-
 export default function HomePage() {
+  // 🧠 VERİLERİ VERİTABANINDAN ÇEKMEK İÇİN HOOK'UMUZU ÇAĞIRIYORUZ
+  const { cars, loading } = useCars();
 
-
-  // Örnek Araç Verileri (Daha sonra veritabanından çekeceğiz)
-  const popularCars = [
-    {
-      id: 1,
-      name: "Mercedes-Benz C-Class",
-      price: 125,
-      img: "https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=1000&auto=format&fit=crop",
-      type: "Sedan"
-    },
-    {
-      id: 2,
-      name: "Porsche 911 Carrera",
-      price: 350,
-      img: "https://images.unsplash.com/photo-1503376763036-066120622c74?q=80&w=1000&auto=format&fit=crop",
-      type: "Sport"
-    },
-    {
-      id: 3,
-      name: "Toyota Corolla Hybrid",
-      price: 45,
-      img: "https://images.unsplash.com/photo-1621007947382-bb3c3968e3bb?q=80&w=1000&auto=format&fit=crop",
-      type: "Sedan"
-    },
-    {
-      id: 4,
-      name: "Range Rover Sport",
-      price: 180,
-      img: "https://images.unsplash.com/photo-1606611013016-969c19ba27bb?q=80&w=1000&auto=format&fit=crop",
-      type: "SUV"
-    },
-    {
-      id: 5,
-      name: "Ford Mustang GT",
-      price: 140,
-      img: "https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?q=80&w=1000&auto=format&fit=crop",
-      type: "Coupe"
-    },
-    {
-      id: 6,
-      name: "Tesla Model 3",
-      price: 110,
-      img: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1000&auto=format&fit=crop",
-      type: "Electric"
-    },
-  ];
+  // Veritabanından gelen araçlardan ilk 6 tanesini popüler araç olarak seçiyoruz
+  const popularCars = cars.slice(0, 6);
 
   return (
     <main className="bg-gray-50 min-h-screen">
 
       {/* --- 1. HERO SECTION (MOR ALAN) --- */}
       <section className="relative bg-linear-to-br from-indigo-900 to-blue-900 text-white pt-24 pb-32 overflow-hidden">
-        {/* Arka plan süslemeleri (Lastik izi efekti vb. için opsiyonel divler eklenebilir) */}
         <div className="container mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-12 relative z-10">
 
           {/* Sol Taraf: Metin */}
@@ -72,12 +32,12 @@ export default function HomePage() {
             <p className="text-blue-200 text-lg max-w-lg mx-auto lg:mx-0">
               Konforlu, güvenli ve bütçe dostu araçlarla seyahatin tadını çıkar. Hayalindeki aracı şimdi kirala.
             </p>
-            <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-full transition transform hover:scale-105 shadow-lg shadow-orange-500/30 cursor-pointer">
+            <Link href="/cars" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-full transition transform hover:scale-105 shadow-lg shadow-orange-500/30 cursor-pointer">
               Hemen Kirala
-            </button>
+            </Link>
           </div>
 
-          {/* Sağ Taraf: Rezervasyon Formu (Book your car) */}
+          {/* Sağ Taraf: Rezervasyon Formu */}
           <div className="lg:w-1/3 w-full bg-white text-gray-800 p-8 rounded-2xl shadow-2xl">
             <h3 className="text-2xl font-bold mb-6 text-gray-900">Aracını Seç</h3>
             <form className="space-y-4">
@@ -120,18 +80,14 @@ export default function HomePage() {
                     className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
-              <button
-                type="button"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4 transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+              <Link
+                href="/cars"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4 transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
+              >
                 <FaSearch /> Araç Bul
-              </button>
+              </Link>
             </form>
           </div>
-        </div>
-
-        {/* Arkaplana blur araç görseli (Opsiyonel süsleme) */}
-        <div className="absolute top-0 right-0 w-2/3 h-full opacity-10 pointer-events-none">
-          {/* Buraya bir img koyulabilir */}
         </div>
       </section>
 
@@ -162,14 +118,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- 3. NEDEN BİZ (MAVİ KUTUCUKLU ALAN) --- */}
+      {/* --- 3. NEDEN BİZ --- */}
       <section className="container mx-auto px-6 lg:px-12 py-24">
         <div className="flex flex-col lg:flex-row items-center gap-16">
-          {/* Sol: Büyük Görsel */}
           <div className="lg:w-1/2 relative">
-            <div
-              className="absolute -top-4 -left-4 w-24 h-24 bg-dots-pattern opacity-20">
-            </div> {/* Süsleme */}
             <img
               src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=1000&auto=format&fit=crop"
               alt="Happy Customer"
@@ -186,7 +138,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Sağ: Metin ve Maddeler */}
           <div className="lg:w-1/2 space-y-6">
             <h4 className="text-blue-600 font-bold uppercase tracking-wider text-sm">Neden Bizi Seçmelisin?</h4>
             <h2 className="text-4xl font-extrabold text-gray-900 leading-tight">Maceran İçin En İyi Araçları Sunuyoruz</h2>
@@ -213,56 +164,101 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- 4. POPÜLER ARAÇLAR (GRID) --- */}
-      <section className="py-24">
+      {/* --- 4. POPÜLER ARAÇLAR (GRID - DİNAMİK YAPILDI) --- */}
+      <section className="py-24 bg-white border-t border-b border-gray-100">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl font-extrabold text-gray-900">Sana Uygun Aracı Seç</h2>
               <p className="text-gray-500 mt-2">Filomuzdaki en popüler araçları incele</p>
             </div>
-            <a href="/cars" className="text-blue-600 font-bold hover:underline hidden md:block">Tümünü Gör →</a>
+            <Link href="/cars" className="text-blue-600 font-bold hover:underline hidden md:block">Tümünü Gör →</Link>
           </div>
 
-          {/* GRID YAPISI */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularCars.map((car) => (
-              <div
-                key={car.id}
-                className="border border-gray-100 rounded-2xl p-4 shadow-lg hover:shadow-2xl transition duration-300 group">
-                {/* Araba Resmi */}
-                <div className="relative h-48 mb-4 overflow-hidden rounded-xl">
-                  <img
-                    src={car.img}
-                    alt={car.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                  <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-900">{car.type}</span>
-                </div>
+          {/* LOADING DURUMU */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <FaSpinner className="animate-spin text-indigo-600 text-4xl mb-3" />
+              <p className="text-gray-500 font-medium">En popüler araçlar garajdan çıkarılıyor...</p>
+            </div>
+          ) : (
+            /* DİNAMİK VERİ TABANI GRİD YAPISI */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {popularCars.map((car) => (
+                <div
+                  key={car.id}
+                  className="border border-gray-100 rounded-2xl p-4 shadow-lg hover:shadow-2xl transition duration-300 group flex flex-col justify-between bg-gray-50/30"
+                >
+                  <div>
+                    {/* Araba Resmi */}
+                    <div className="relative h-48 mb-4 overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center">
+                      <Image
+                        src={
+                          car.imageUrl?.startsWith('http')
+                            ? car.imageUrl
+                            : `http://localhost:5261/${car.imageUrl?.replace(/^\//, '')}`
+                        }
+                        alt={`${car.brand} ${car.model}`}
+                        fill
+                        className="object-cover group-hover:scale-110 transition duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized
+                      />
+                      <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-900 z-10">{car.bodyType}</span>
 
-                {/* Bilgiler */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-lg text-gray-900">{car.name}</h3>
-                    <p className="text-blue-600 font-bold text-lg">${car.price}<span className="text-gray-400 text-sm font-normal">/gün</span></p>
+                      {!car.isAvailable && (
+                        <span className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm z-10">Kirada</span>
+                      )}
+                    </div>
+
+                    {/* Bilgiler */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 leading-tight">{car.brand}</h3>
+                          <p className="text-xs text-gray-400 mt-0.5">{car.model} • {car.year}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-indigo-600 font-bold text-lg">₺{car.pricePerDay}</p>
+                          <p className="text-gray-400 text-[10px]">/gün</p>
+                        </div>
+                      </div>
+
+                      {/* Özellik İkonları */}
+                      <div className="flex items-center gap-4 text-gray-500 text-xs py-3 border-t border-gray-100">
+                        <div className="flex items-center gap-1"><FaCogs /> {car.transmission}</div>
+                        <div className="flex items-center gap-1"><FaUserFriends /> {car.seatCount} Kişi</div>
+                        <div className="flex items-center gap-1"><FaGasPump /> {car.fuelType}</div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Özellik İkonları */}
-                  <div className="flex items-center gap-4 text-gray-500 text-sm py-3 border-t border-gray-100">
-                    <div className="flex items-center gap-1"><FaCogs /> Auto</div>
-                    <div className="flex items-center gap-1"><FaUserFriends /> 4 Kişi</div>
-                    <div className="flex items-center gap-1"><FaGasPump /> Benzin</div>
+                  {/* Detay Sayfasına Yönlendiren Akıllı Buton */}
+                  <div className="mt-4">
+                    {car.isAvailable ? (
+                      <Link
+                        href={`/cars/${car.id}`}
+                        className="w-full block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md shadow-indigo-600/10 cursor-pointer"
+                      >
+                        Hemen Kirala
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full bg-gray-200 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed"
+                      >
+                        Müsait Değil
+                      </button>
+                    )}
                   </div>
-
-                  <button className="w-full bg-indigo-50 text-indigo-700 font-bold py-3 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer">
-                    Hemen Kirala
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          <div className="mt-8 text-center md:hidden">   {/* bu kısım mobil cihazlarda gözükecek  */}
-            <a href="/cars" className="font-bold hover:underline text-black">Tümünü Gör →</a>
+          {/* Mobil Görünüm Tümünü Gör */}
+          <div className="mt-8 text-center md:hidden">
+            <Link href="/cars" className="font-bold hover:underline text-black">Tümünü Gör →</Link>
           </div>
         </div>
       </section>
@@ -297,8 +293,7 @@ export default function HomePage() {
 
       {/* --- 6. MOBİL APP DOWNLOAD --- */}
       <section className="container mx-auto px-6 lg:px-12 py-24">
-        <div className="flex flex-col lg:flex-row items-center  rounded-3xl p-8 lg:p-16 relative overflow-hidden">
-          {/* Sol Taraf: Metin */}
+        <div className="flex flex-col lg:flex-row items-center rounded-3xl p-8 lg:p-16 relative overflow-hidden">
           <div className="lg:w-1/2 space-y-6 relative z-10">
             <h2 className="text-4xl font-extrabold text-gray-900">Mobil Uygulamamızı İndirin</h2>
             <p className="text-gray-500 text-lg">
@@ -322,9 +317,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Sağ Taraf: Telefon Mockup (CSS ile temsili veya Resim) */}
           <div className="lg:w-1/2 mt-12 lg:mt-0 flex justify-center relative z-10">
-            {/* Temsili telefon görseli */}
             <img
               src="https://framerusercontent.com/images/3m72Wz5T03t6U89ZzLgR94o.png"
               alt="Mobile App"

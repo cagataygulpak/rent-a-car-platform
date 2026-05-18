@@ -3,60 +3,15 @@
 
 import BrandLogos from '@/widgets/BrandLogos';
 import Image from 'next/image';
-import { ReactNode, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ReactNode, useState } from 'react';
+import { useCars } from '@/app/hooks/useCars';
 import { FaCar, FaCog, FaGasPump, FaSnowflake, FaSearch, FaAngleRight, FaShuttleVan, FaCarSide, FaTruckPickup, FaSpinner } from "react-icons/fa";
 
-// C# Backend'deki Car.cs modelimizin birebir TypeScript karşılığı
-interface Car {
-    id: number;
-    brand: string;
-    model: string;
-    year: number;
-    color: string;
-    transmission: string;
-    fuelType: string;
-    bodyType: string;
-    kilometer: number;
-    seatCount: number;
-    pricePerDay: number;
-    depositPrice: number;
-    isAvailable: boolean;
-    plateNumber: string;
-    imageUrl: string;
-    description: string;
-    minFindexScore: number;
-    minDriverAge: number;
-}
-
 export default function VehiclesPage() {
-    // --- STATE YÖNETİMİ ---
-    const [cars, setCars] = useState<Car[]>([]); // API'den gelen araçlar
-    const [loading, setLoading] = useState(true); // Yükleniyor durumu
-    const [error, setError] = useState<string | null>(null); // Hata durumu
+    // 🧠 TÜM VERİ ÇEKME VE LOADING MANTIĞINI HOOK'TAN ÇEKİYORUZ
+    const { cars, loading } = useCars();
     const [selectedCategory, setSelectedCategory] = useState("Tümü");
-
-    // --- API'DEN VERİ ÇEKME (FETCH) ---
-    useEffect(() => {
-        const fetchCars = async () => {
-            try {
-                // Backend API adresimiz (Port numaran 5261 değilse burayı kendi portunla değiştir)
-                const response = await fetch("http://localhost:5261/api/Cars");
-
-                if (!response.ok) {
-                    throw new Error("Araçlar yüklenirken bir sorun oluştu.");
-                }
-
-                const data = await response.json();
-                setCars(data); // Gelen veriyi hafızaya al
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false); // İşlem bitti, yükleme animasyonunu durdur
-            }
-        };
-
-        fetchCars();
-    }, []);
 
     // --- FİLTRELEME VE İKON AYARLARI ---
     const categories = ["Tümü", "Sedan", "SUV", "Sport", "Minivan", "Hatchback"];
@@ -70,11 +25,10 @@ export default function VehiclesPage() {
         "Hatchback": <FaCar />
     };
 
-    // Seçilen kategoriye göre araçları filtrele (Backend'den bodyType olarak geliyor)
+    // Seçilen kategoriye göre araçları filtrele
     const filteredCars = selectedCategory === "Tümü"
         ? cars
         : cars.filter(car => car.bodyType === selectedCategory);
-
 
     // --- YÜKLENİYOR (LOADING) EKRANI ---
     if (loading) {
@@ -82,18 +36,6 @@ export default function VehiclesPage() {
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                 <FaSpinner className="animate-spin text-indigo-600 text-6xl mb-4" />
                 <h2 className="text-2xl font-bold text-gray-700">Garajın kapıları açılıyor...</h2>
-            </div>
-        );
-    }
-
-    // --- HATA (ERROR) EKRANI ---
-    if (error) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-200 shadow-sm text-center">
-                    <h2 className="text-xl font-bold mb-2">Eyvah, bir sorun var!</h2>
-                    <p>{error}</p>
-                </div>
             </div>
         );
     }
@@ -190,16 +132,22 @@ export default function VehiclesPage() {
                                 </div>
                             </div>
 
-                            {/* Buton */}
-                            <button
-                                disabled={!car.isAvailable}
-                                className={`w-full font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 
-                                    ${car.isAvailable
-                                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 cursor-pointer"
-                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-                            >
-                                {car.isAvailable ? "Hemen Kirala" : "Müsait Değil"} <FaAngleRight />
-                            </button>
+                            {/* Buton - Detay Sayfasına Yönlendiren Link */}
+                            {car.isAvailable ? (
+                                <Link
+                                    href={`/cars/${car.id}`}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+                                >
+                                    Hemen Kirala <FaAngleRight />
+                                </Link>
+                            ) : (
+                                <button
+                                    disabled
+                                    className="w-full bg-gray-300 text-gray-500 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-not-allowed"
+                                >
+                                    Müsait Değil <FaAngleRight />
+                                </button>
+                            )}
 
                         </div>
                     ))}
