@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { FaEnvelope, FaLock, FaCar } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaCar, FaEye, FaEyeSlash } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+
 
 export default function LoginPage() {
     const router = useRouter();
@@ -13,6 +14,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [formData, setFormData] = useState({ email: "", password: "" });
+    const [showPassword, setShowPassword] = useState(false); // 👈 Şifre görünürlüğü state'i
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,20 +28,26 @@ export default function LoginPage() {
         }
         setLoading(true);
         try {
-            const url = `http://localhost:5261/api/Account/login?email=${formData.email}&password=${formData.password}`;
+            // 🧠 URL tertemiz, parametreleri sildik!
+            const url = `http://localhost:5261/api/Account/login`;
 
-            // --- GÜNCELLEME BURADA ---
             const res = await fetch(url, {
                 method: "POST",
-                // BU SATIR ÇOK ÖNEMLİ: Cookie'nin tarayıcıya kaydedilmesini sağlar.
-                credentials: "include"
+                headers: {
+                    "Content-Type": "application/json" // 🛠️ JSON veri göndereceğimizi belirtiyoruz
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    email: formData.email,       // 🛠️ Kapalı kutuda (Body) gidiyor
+                    password: formData.password  // Artı işareti asla bozulmaz
+                })
             });
 
             if (res.ok) {
                 const data = await res.json();
                 login({
                     username: data.username,
-                    role: data.role // Backend'den artık bu geliyor
+                    role: data.role
                 });
                 setIsSuccess(true);
                 toast.success(`Motor çalıştırılıyor... Hoş geldin ${data.username || ""}! 🏎️💨`, { autoClose: 1500 });
@@ -127,22 +135,39 @@ export default function LoginPage() {
                             </div>
 
                             <div className="relative">
+                                {/* Sol taraftaki asma kilit ikonu */}
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <FaLock className="text-gray-400 text-lg" />
                                 </div>
+
+                                {/* Şifre Input Alanı (type kısmı artık dinamik!) */}
                                 <input
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"} // 🧠 true ise metin, false ise gizli şifre formatı
                                     placeholder="Şifre"
                                     onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition"
+                                    className="w-full pl-12 pr-12 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition"
                                     disabled={loading || isSuccess}
                                 />
+
+                                {/* Sağ taraftaki Tıklanabilir Göz Butonu */}
+                                <button
+                                    type="button" // Formu kazara submit etmesin diye type="button" şart
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                    disabled={loading || isSuccess}
+                                >
+                                    {showPassword ? <FaEyeSlash className="text-lg" /> : <FaEye className="text-lg" />}
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex items-center justify-end">
-                            <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-500">Şifremi Unuttum?</a>
+                            <Link href="/forgot-password"
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-500"
+                            >
+                                Şifremi Unuttum?
+                            </Link>
                         </div>
 
                         <button
