@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RentACar.API.data;
+using RentACar.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,12 @@ builder.Services.AddDbContext<Datacontext>(options =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
 })
     .AddEntityFrameworkStores<Datacontext>()
     .AddDefaultTokenProviders();
@@ -53,6 +60,8 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 // 4. CORS AYARLARI
 builder.Services.AddCors(options =>

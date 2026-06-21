@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { FaUser, FaEnvelope, FaLock, FaCheckCircle } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaCheckCircle, FaEye, FaEyeSlash } from "react-icons/fa";
 import ReCAPTCHA from "react-google-recaptcha"; // 1. Paketi içeri aldık
 
 interface IdentityError { code: string; description: string; }
@@ -16,6 +16,9 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null); // 2. Token state'i
     const [formData, setFormData] = useState({ username: "", email: "", password: "", confirmPassword: "" });
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,14 +33,11 @@ export default function RegisterPage() {
         e.preventDefault();
 
         // --- Validasyonlar ---
-        if (!formData.username || !formData.email || !formData.password) {
+        if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
             toast.warning("Lütfen tüm alanları doldurun! 📝"); return;
         }
         if (formData.password !== formData.confirmPassword) {
             toast.error("Şifreler eşleşmiyor! ❌"); return;
-        }
-        if (formData.password.length < 6) {
-            toast.warning("Şifre en az 6 karakter olmalı! 🛡️"); return;
         }
 
         // --- 3. ROBOT KONTROLÜ (Token yoksa işlem yapma) ---
@@ -48,10 +48,21 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            // 4. Token'ı Backend'e gönderiyoruz (captchaToken parametresi eklendi)
-            const url = `http://localhost:5261/api/Account/register?username=${formData.username}&email=${formData.email}&password=${formData.password}&captchaToken=${captchaToken}`;
+            // 🧠 URL tertemiz! Bütün parametreleri güvenli JSON paketine aldık.
+            const url = `http://localhost:5261/api/Account/register`;
 
-            const res = await fetch(url, { method: "POST" });
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json" // 🛠️ JSON veri göndereceğimizi belirtiyoruz
+                },
+                body: JSON.stringify({
+                    username: formData.username,
+                    email: formData.email,
+                    password: formData.password,     // Şifrendeki '+' işareti artık yolda silinmeyecek
+                    captchaToken: captchaToken
+                })
+            });
 
             if (res.ok) {
                 toast.success("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz... 🚀");
@@ -59,14 +70,13 @@ export default function RegisterPage() {
             } else {
                 const errorData = await res.json();
 
-                // Backend'den gelen "RobotDetected" hatasını yakala
                 if (errorData.code === "RobotDetected") {
                     toast.error(errorData.description);
-                    recaptchaRef.current?.reset(); // Kutuyu sıfırla ki tekrar denesin
+                    recaptchaRef.current?.reset();
                     setCaptchaToken(null);
                 }
                 else if (Array.isArray(errorData)) {
-                    errorData.forEach((err: IdentityError) => { toast.error(err.description); });
+                    errorData.forEach((err: any) => { toast.error(err.description); });
                 } else if (errorData.message) {
                     toast.error(errorData.message);
                 } else {
@@ -128,22 +138,18 @@ export default function RegisterPage() {
 
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><FaLock className="text-gray-400 text-lg" /></div>
-                                <input
-                                    name="password"
-                                    type="password"
-                                    placeholder="Şifre"
-                                    onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" disabled={loading} />
+                                <input name="password" type={showPassword ? "text" : "password"} placeholder="Şifre" onChange={handleChange} className="w-full pl-12 pr-12 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" disabled={loading} />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                                    {showPassword ? <FaEyeSlash className="text-lg" /> : <FaEye className="text-lg" />}
+                                </button>
                             </div>
 
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><FaCheckCircle className="text-gray-400 text-lg" /></div>
-                                <input
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="Şifre Tekrar"
-                                    onChange={handleChange}
-                                    className="w-full pl-12 pr-4 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" disabled={loading} />
+                                <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Şifre Tekrar" onChange={handleChange} className="w-full pl-12 pr-12 py-3 text-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-600 transition" disabled={loading} />
+                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                                    {showConfirmPassword ? <FaEyeSlash className="text-lg" /> : <FaEye className="text-lg" />}
+                                </button>
                             </div>
                         </div>
 
